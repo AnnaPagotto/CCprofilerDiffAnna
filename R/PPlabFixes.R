@@ -82,3 +82,7 @@ logVAR<-log(mdata$sigma^2)
 	output$IBMT.dfprior<-d0
 	output
 }
+
+
+
+
