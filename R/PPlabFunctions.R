@@ -174,6 +174,7 @@ fit_gaussians_mod <- function (chromatogram, n_gaussians, min_iterations = 5, ma
   return(results)
 }
 
+#choose_gaussians_corr_mod
 
 choose_gaussians_corr_mod <- function (chromatogram, points = NULL, max_gaussians = 5, criterion = c("AICc", 
   "AIC", "BIC"), min_iterations=5, max_iterations = 10, min_R_squared = 0.5, 
