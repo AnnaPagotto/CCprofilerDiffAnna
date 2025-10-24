@@ -1,6 +1,6 @@
 Package: CCprofilerDiffAnna
 Type: Package
-Title: Complex feature detection using SEC protein chromatograms.
+Title: Complex feature detection using SEC protein chromatograms - bugs fixed, functions added from the PP LAb SECy members.
 Version: 0.99.1
 Author: Robin Hafen <robin.hafen@gmail.com> Isabell Bludau <bludau@imsb.biol.ethz.ch>
 Maintainer: Isabell Bludau <bludau@imsb.biol.ethz.ch>
