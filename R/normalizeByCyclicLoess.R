@@ -14,58 +14,59 @@
 #' @export
 #'
 
-normalizeByCyclicLoess <- function(traces_list, window = 3, step = 1, plot = TRUE, PDF = TRUE, name = "normalizeByCyclicLoess") {
-  .tracesListTest(traces_list, type = "peptide")
-  trace_intensities_long <- lapply(traces_list, extractvaluesForNorm)
-  combi_table <- rbindlist(trace_intensities_long, use.names=TRUE, fill=FALSE, idcol="sample")
-  combi_table[, filename := paste0(sample,"_",fraction_number)]
-  combi_table$fraction_number <- as.numeric(combi_table$fraction_number)
-  combi_table <- unique(combi_table)
-
-  combi_table_forPlot <- copy(combi_table)
-  combi_table_forPlot$intensity = as.numeric(combi_table_forPlot$intensity)
-  combi_table_forPlot[, total_intensity:=sum(intensity), by=c("filename","sample")]
-  combi_table_forPlot <- unique(subset(combi_table_forPlot, select=c("fraction_number","total_intensity","sample")))
-  pnormdata<-ggplot(combi_table_forPlot, aes(x=fraction_number, y=total_intensity, group=sample)) +
-    geom_line(aes(color=sample)) +
-    geom_point(aes(color=sample)) +
-    theme_classic()
-  ggsave(pnormdata,filename=paste0(name,"_priorNormalization.pdf"),width=7,height=3.5)
-
-  combi_table[, intensity := log2(intensity)]
-  combi_table[, intensity := ifelse(intensity == -Inf, NA, intensity)]
-  #combi_table[, intensity := ifelse(intensity < 0.000001, NA, intensity)]
-  combi_table_norm <- normalize_sn(combi_table, window, step)
-  combi_table_norm[, intensity := 2^(intensity)]
-  combi_table_norm[, intensity := ifelse(intensity == 1, 0, intensity)]
-
-  saveRDS(combi_table_norm,"combi_table_norm.rds")
-
-  combi_table_toMerge <- subset(combi_table, select = c("filename","id", "sample", "fraction_number"))
-  combi_table_norm_final <- merge(combi_table_toMerge, combi_table_norm, by=c("filename","id"))
-
-  combi_table_norm_forPlot <- copy(combi_table_norm_final)
-  combi_table_norm_forPlot[, total_intensity:=sum(intensity), by=c("filename","sample")]
-  combi_table_norm_forPlot <- unique(subset(combi_table_norm_forPlot, select=c("fraction_number","total_intensity","sample")))
-  pnormdata<-ggplot(combi_table_norm_forPlot, aes(x=fraction_number, y=total_intensity, group=sample)) +
-    geom_line(aes(color=sample)) +
-    geom_point(aes(color=sample)) +
-    theme_classic()
-  ggsave(pnormdata,filename=paste0(name,"_postNormalization.pdf"),width=7,height=3.5)
-
-  list_norm <- split(combi_table_norm_final, by="sample")
-  list_norm_wide <- lapply(list_norm, dcast_backToTraces)
-
-  traces_list_norm <- copy(traces_list)
-  sample_names <- names(traces_list)
-  for(s_name in sample_names){
-    traces_list_norm[[s_name]]$traces <- list_norm_wide[[s_name]]
-    traces_list_norm[[s_name]]$fraction_annotation <- subset(traces_list_norm[[s_name]]$fraction_annotation, id %in% names(traces_list_norm[[s_name]]$traces))
-    traces_list_norm[[s_name]]$trace_annotation <- subset(traces_list_norm[[s_name]]$trace_annotation, id %in% traces_list_norm[[s_name]]$traces$id)
-  }
-  .tracesListTest(traces_list_norm, type = "peptide")
-  return(traces_list_norm)
-}
+## Anna: fixed in PPLabFunctions.R
+# normalizeByCyclicLoess <- function(traces_list, window = 3, step = 1, plot = TRUE, PDF = TRUE, name = "normalizeByCyclicLoess") {
+#   .tracesListTest(traces_list, type = "peptide")
+#   trace_intensities_long <- lapply(traces_list, extractvaluesForNorm)
+#   combi_table <- rbindlist(trace_intensities_long, use.names=TRUE, fill=FALSE, idcol="sample")
+#   combi_table[, filename := paste0(sample,"_",fraction_number)]
+#   combi_table$fraction_number <- as.numeric(combi_table$fraction_number)
+#   combi_table <- unique(combi_table)
+# 
+#   combi_table_forPlot <- copy(combi_table)
+#   combi_table_forPlot$intensity = as.numeric(combi_table_forPlot$intensity)
+#   combi_table_forPlot[, total_intensity:=sum(intensity), by=c("filename","sample")]
+#   combi_table_forPlot <- unique(subset(combi_table_forPlot, select=c("fraction_number","total_intensity","sample")))
+#   pnormdata<-ggplot(combi_table_forPlot, aes(x=fraction_number, y=total_intensity, group=sample)) +
+#     geom_line(aes(color=sample)) +
+#     geom_point(aes(color=sample)) +
+#     theme_classic()
+#   ggsave(pnormdata,filename=paste0(name,"_priorNormalization.pdf"),width=7,height=3.5)
+# 
+#   combi_table[, intensity := log2(intensity)]
+#   combi_table[, intensity := ifelse(intensity == -Inf, NA, intensity)]
+#   #combi_table[, intensity := ifelse(intensity < 0.000001, NA, intensity)]
+#   combi_table_norm <- normalize_sn(combi_table, window, step)
+#   combi_table_norm[, intensity := 2^(intensity)]
+#   combi_table_norm[, intensity := ifelse(intensity == 1, 0, intensity)]
+# 
+#   saveRDS(combi_table_norm,"combi_table_norm.rds")
+# 
+#   combi_table_toMerge <- subset(combi_table, select = c("filename","id", "sample", "fraction_number"))
+#   combi_table_norm_final <- merge(combi_table_toMerge, combi_table_norm, by=c("filename","id"))
+# 
+#   combi_table_norm_forPlot <- copy(combi_table_norm_final)
+#   combi_table_norm_forPlot[, total_intensity:=sum(intensity), by=c("filename","sample")]
+#   combi_table_norm_forPlot <- unique(subset(combi_table_norm_forPlot, select=c("fraction_number","total_intensity","sample")))
+#   pnormdata<-ggplot(combi_table_norm_forPlot, aes(x=fraction_number, y=total_intensity, group=sample)) +
+#     geom_line(aes(color=sample)) +
+#     geom_point(aes(color=sample)) +
+#     theme_classic()
+#   ggsave(pnormdata,filename=paste0(name,"_postNormalization.pdf"),width=7,height=3.5)
+# 
+#   list_norm <- split(combi_table_norm_final, by="sample")
+#   list_norm_wide <- lapply(list_norm, dcast_backToTraces)
+# 
+#   traces_list_norm <- copy(traces_list)
+#   sample_names <- names(traces_list)
+#   for(s_name in sample_names){
+#     traces_list_norm[[s_name]]$traces <- list_norm_wide[[s_name]]
+#     traces_list_norm[[s_name]]$fraction_annotation <- subset(traces_list_norm[[s_name]]$fraction_annotation, id %in% names(traces_list_norm[[s_name]]$traces))
+#     traces_list_norm[[s_name]]$trace_annotation <- subset(traces_list_norm[[s_name]]$trace_annotation, id %in% traces_list_norm[[s_name]]$traces$id)
+#   }
+#   .tracesListTest(traces_list_norm, type = "peptide")
+#   return(traces_list_norm)
+# }
 
 dcast_backToTraces <- function(normData){
   normData_sub <- unique(subset(normData, select = c("id","fraction_number","intensity")))
