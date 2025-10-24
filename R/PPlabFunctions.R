@@ -474,27 +474,6 @@ testDifferentialExpression_beniFix <- function (featureVals, compare_between = "
 }
 
 
-getQuantTraces <- function(featureVals, compare_between){
-  if ("complex_id" %in% names(featureVals)) {
-    if("Replicate" %in% names(featureVals)){
-      featureVals[, useForQuant := (!any(imputedFraction) & .N == 2),
-                  by=.(id, feature_id, complex_id, apex, Replicate, fraction)]
-    }else{
-      featureVals[, useForQuant := (!any(imputedFraction) & .N == 2),
-                  by=.(id, feature_id, complex_id, apex, fraction)]
-    }
-  } else {
-    if("Replicate" %in% names(featureVals)){
-      featureVals[, useForQuant := (!any(imputedFraction) & .N == 2),
-                  by=.(id, feature_id, apex, Replicate, fraction)]
-    }else{
-      featureVals[, useForQuant := (!any(imputedFraction) & .N == 2),
-                  by=.(id, feature_id, apex, fraction)]
-    }
-  }
-  return(featureVals)
-
-
 ############################################################################
 ###################### getMassAssemblyChange_aljazfix
 ############################################################################
