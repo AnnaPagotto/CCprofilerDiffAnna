@@ -83,8 +83,9 @@ logVAR<-log(mdata$sigma^2)
 	output
 }
 
-###############################################################################
-#pick picking
+############################################################################
+################################ pick picking
+############################################################################
 
 fit_gaussians_mod <- function (chromatogram, n_gaussians, min_iterations = 5, max_iterations = 10, min_R_squared = 0.5, 
   method = c("guess", "random"), filter_gaussians_center = TRUE, 
@@ -287,8 +288,9 @@ gaussian_bic <- function (coefs, chromatogram)
   return(BIC)
 }
 
-############################################################################### testDifferentialExpression_beniFix
-
+############################################################################
+####################### testDifferentialExpression_beniFix
+############################################################################
 
 testDifferentialExpression_beniFix <- function (featureVals, compare_between = "Condition", level = c("protein", 
                                                                                               "proteoform", "peptide", "complex"), measuredOnly = TRUE) 
@@ -529,9 +531,10 @@ getQuantTraces <- function(featureVals, compare_between){
   return(featureVals)
 
 
-
-########################################################################################################## getMassAssemblyChange_aljazfix
-
+############################################################################
+###################### getMassAssemblyChange_aljazfix
+############################################################################
+	
 	getMassAssemblyChange_aljazfix <- function(tracesList, design_matrix,
                                   compare_between = "Condition",
                                   quantLevel = "protein_id",
@@ -650,7 +653,9 @@ getQuantTraces <- function(featureVals, compare_between){
   }
 }
 
-################################################################### normalizeByCyclicLoess
+############################################################################
+############################# normalizeByCyclicLoess
+############################################################################
 
 	normalizeByCyclicLoess <- function(traces_list, window = 3, step = 1, plot = TRUE, PDF = TRUE, name = "normalizeByCyclicLoess") {
   .tracesListTest(traces_list, type = "peptide")
@@ -757,3 +762,196 @@ extractvaluesForNorm <- function(traces){
   #return(lxn)
   return(lln_dt_sub)
 }
+
+
+############################################################################
+#################### testDifferentialExpression_1repfix_chatgpt
+############################################################################
+	
+	testDifferentialExpression_1repfix_chatgpt <- function(featureVals,
+                                             compare_between = "Condition",
+                                             level = c("protein", "proteoform", "peptide", "complex"),
+                                             measuredOnly = TRUE) {
+  level <- match.arg(level)
+  featVals <- copy(featureVals)
+   # Set key based on presence of complex_id
+  if ("complex_id" %in% names(featVals)) {
+    setkeyv(featVals, c("feature_id", "complex_id", "apex", "id", "fraction"))
+  } else {
+    setkeyv(featVals, c("feature_id", "apex", "id", "fraction"))
+  }
+  # Filter based on measuredOnly flag
+  message("Excluding peptides only found in one condition...")
+  if (measuredOnly) {
+    featVals <- subset(featVals, imputedFraction == FALSE)
+    featureValsBoth <- filterValsByFractionOverlap(featVals, compare_between)
+    featureValsBoth[, n_frac := .N, by = c("id", "feature_id", "apex", compare_between)]
+    featureValsBoth <- subset(featureValsBoth, n_frac > 2)
+  } else {
+    featureValsBoth <- filterValsByOverlap(featVals, compare_between)
+  }
+  # Get quantitative traces
+  featureValsBoth <- getQuantTraces(featureValsBoth, compare_between)
+
+  # Perform differential expression testing
+  message("Testing peptide-level differential expression")
+############################################################# if "complex_id" #####################################
+    if ("complex_id" %in% names(featureValsBoth)) {
+    grpn = uniqueN(featureValsBoth[,.(id, feature_id, complex_id, apex)])
+    pb <- txtProgressBar(min = 0, max = grpn, style = 3)
+    tests <- featureValsBoth[, {
+      setTxtProgressBar(pb, .GRP)
+      samples = unique(.SD[,get(compare_between)])
+      # qints = .SD[useForQuant == T, .(s = sum(intensity)), by = .(get(compare_between))] # this disables a lot of comparisons
+      qints = .SD[, .(s = sum(intensity)), by = .(get(compare_between), Replicate)]
+      if (length(unique(design_matrix$Replicate)) > 1) {
+        a = t.test(formula = log(qints$s) ~ qints$get, var.equal = FALSE)
+      } else {
+        cond1 <- .SD[get(compare_between) == samples[1], intensity]
+        cond2 <- .SD[get(compare_between) == samples[2], intensity]
+        a <- t.test(cond1, cond2, paired = T, var.equal = FALSE)
+      }
+      ints = .SD[imputedFraction == F, .(s = sum(intensity)), by = .(get(compare_between))] # this creates quantitative discrepancies depending on how many fractions are used
+      int1 = max(0, mean(ints[get==samples[1]]$s), na.rm=T)
+      int2 = max(0, mean(ints[get==samples[2]]$s), na.rm=T)
+      qint1 = mean(qints[get==samples[1]]$s)
+      qint2 = mean(qints[get==samples[2]]$s)
+      global_ints = .SD[, .(s = unique(global_intensity)), by = .(get(compare_between), Replicate)]
+      global_ints_imp = .SD[, .(s = unique(global_intensity_imputed)), by = .(get(compare_between), Replicate)]
+      global_int1 = mean(global_ints[get==samples[1]]$s)
+      global_int2 = mean(global_ints[get==samples[2]]$s)
+      global_int1_imp = mean(global_ints_imp[get==samples[1]]$s)
+      global_int2_imp = mean(global_ints_imp[get==samples[2]]$s)
+      #local_FC_all = log2(qints[get==samples[1]]$s/qints[get==samples[2]]$s)
+      #global_FC_all = log2(global_ints_imp[get==samples[1]]$s/global_ints_imp[get==samples[2]]$s)
+      #local_vs_global_FC_all = data.table(fc=c(local_FC_all,global_FC_all),sam=c(rep("local",length(local_FC_all)),rep("global",length(global_FC_all))))
+      if (length(unique(design_matrix$Replicate)) > 1) {
+        b = t.test(formula = log(global_ints_imp$s) ~ global_ints_imp$get, var.equal = FALSE)
+        global_pVal = b$p.value
+        #c = t.test(formula = local_vs_global_FC_all$fc ~ local_vs_global_FC_all$sam , paired = F, var.equal = FALSE)
+        #local_vs_global_pVal = c$p.value
+        meanDiff=a$estimate[1]-a$estimate[2]
+      } else {
+        global_pVal = 1
+        #local_vs_global_pVal = 1
+        meanDiff=a$estimate
+      }
+
+      .(pVal = a$p.value,
+        int1 = int1, int2 = int2,
+        meanDiff = meanDiff,
+        qint1 = qint1, qint2 = qint2, log2FC =  log2(qint1/qint2),
+        n_replicates = a$parameter + 1,  Tstat = a$statistic, testOrder = paste0(samples[1],".vs.",samples[2]),
+        global_int1 = global_int1, global_int2 = global_int2, global_log2FC = log2(global_int1/global_int2),
+        global_int1_imp = global_int1_imp, global_int2_imp = global_int2_imp, global_log2FC_imp = log2(global_int1_imp/global_int2_imp),
+        #local_vs_global_log2FC = log2(qint1/qint2)-log2(global_int1/global_int2), local_vs_global_log2FC_imp = log2(qint1/qint2)-log2(global_int1_imp/global_int2_imp),
+        global_pVal = global_pVal#, local_vs_global_pVal = local_vs_global_pVal
+       )},
+      by = .(id, feature_id, complex_id, apex)]
+    close(pb)
+  } else {
+############################################################# if not "complex_id" ##################################
+   grpn <- uniqueN(featureValsBoth[, .(id, feature_id, apex)])
+    pb <- txtProgressBar(min = 0, max = grpn, style = 3)
+  
+    tests <- featureValsBoth[, {
+      setTxtProgressBar(pb, .GRP)
+      samples <- unique(.SD[, get(compare_between)])
+      qints = .SD[, .(s = sum(intensity)), by = .(get(compare_between), Replicate)] 
+      if (length(unique(design_matrix$Replicate)) > 1) {
+          a = t.test(formula = log(qints$s) ~ qints$get, var.equal = FALSE)
+        } else {
+          cond1 <- .SD[get(compare_between) == samples[1], intensity]
+          cond2 <- .SD[get(compare_between) == samples[2], intensity]
+          a <- t.test(cond1, cond2, paired = T, var.equal = FALSE)
+        }
+      
+      ints <- .SD[imputedFraction == FALSE, .(s = sum(intensity)), by = .(get(compare_between))]
+      int1 <- max(0, mean(ints[get == samples[1]]$s), na.rm = TRUE)
+      int2 <- max(0, mean(ints[get == samples[2]]$s), na.rm = TRUE)
+      qint1 <- mean(qints[get == samples[1]]$s)
+      qint2 <- mean(qints[get == samples[2]]$s)
+      
+      global_ints = .SD[, .(s = unique(global_intensity)), by = .(get(compare_between), Replicate)]
+      global_ints_imp = .SD[, .(s = unique(global_intensity_imputed)), by = .(get(compare_between), Replicate)]
+      global_int1 = mean(global_ints[get==samples[1]]$s)
+      global_int2 = mean(global_ints[get==samples[2]]$s)
+      global_int1_imp = mean(global_ints_imp[get==samples[1]]$s)
+      global_int2_imp = mean(global_ints_imp[get==samples[2]]$s)
+      #local_FC_all = log2(qints[get==samples[1]]$s/qints[get==samples[2]]$s)
+      #global_FC_all = log2(global_ints_imp[get==samples[1]]$s/global_ints_imp[get==samples[2]]$s)
+      #local_vs_global_FC_all = data.table(fc=c(local_FC_all,global_FC_all),sam=c(rep("local",length(local_FC_all)),rep("global",length(global_FC_all))))
+      if (length(unique(design_matrix$Replicate)) > 1) {
+        b = t.test(formula = log(global_ints_imp$s) ~ global_ints_imp$get, var.equal = FALSE) 
+        global_pVal = b$p.value
+        #c = t.test(formula = local_vs_global_FC_all$fc ~ local_vs_global_FC_all$sam , paired = F, var.equal = FALSE) 
+        #local_vs_global_pVal = c$p.value
+        meanDiff=a$estimate[1]-a$estimate[2]
+      } else {
+        global_pVal = 1
+        #local_vs_global_pVal = 1
+        meanDiff=a$estimate
+      }
+      .(pVal = a$p.value, 
+        int1 = int1, int2 = int2, 
+        meanDiff = meanDiff,
+        qint1 = qint1, qint2 = qint2, log2FC =  log2(qint1/qint2),
+        n_replicates = a$parameter + 1,  Tstat = a$statistic, testOrder = paste0(samples[1],".vs.",samples[2]),
+        global_int1 = global_int1, global_int2 = global_int2, global_log2FC = log2(global_int1/global_int2),
+        global_int1_imp = global_int1_imp, global_int2_imp = global_int2_imp, global_log2FC_imp = log2(global_int1_imp/global_int2_imp),
+        #local_vs_global_log2FC = log2(qint1/qint2)-log2(global_int1/global_int2), local_vs_global_log2FC_imp = log2(qint1/qint2)-log2(global_int1_imp/global_int2_imp),
+        global_pVal = global_pVal#, local_vs_global_pVal = local_vs_global_pVal
+      )},
+      by = .(id, feature_id, apex)]
+    close(pb)
+  }
+##############################################################################################################
+  tests[is.na(log2FC) & (int1 == 0 | int2  == 0) & (meanDiff == 0)]$log2FC <- 0
+  tests[is.na(log2FC) & (int1 == 0 | int2  == 0) & (meanDiff > 0)]$log2FC <- Inf
+  tests[is.na(log2FC) & (int1 == 0 | int2  == 0) & (meanDiff < 0)]$log2FC <- -Inf
+
+  if ("proteoform_id" %in% names(featVals)) {
+    proteoform_ann <- unique(subset(featVals,select=c("id","proteoform_id")))
+    tests <- merge(tests,proteoform_ann,by=c("id"),all.x=T,all.y=F,sort=F)
+  }
+
+  if(level == "peptide"){
+    tests$pBHadj <- p.adjust(tests$pVal, method = "BH")
+    pQv <- qvalue::qvalue(tests$pVal, lambda = 0.4)
+    tests$qVal <- pQv$qvalues
+    if (length(unique(design_matrix$Replicate)) > 1) {
+      tests$global_pBHadj <- p.adjust(tests$global_pVal, method = "BH")
+      global_pQv <- qvalue::qvalue(tests$global_pVal, lambda = 0.4)
+      tests$global_qVal <- global_pQv$qvalues
+      #tests$local_vs_global_pBHadj <- p.adjust(tests$local_vs_global_pVal, method = "BH")
+      #local_vs_global_pQv <- try(qvalue::qvalue(tests$local_vs_global_pVal, lambda = 0.4), silent = T)
+      #if (is(local_vs_global_pQv, "try-error")) {
+      #  tests$local_vs_global_qVal <- NA
+      #} else {
+      #  tests$local_vs_global_qVal <- local_vs_global_pQv$qvalues
+      #}
+    } else {
+      tests$global_pBHadj <- 1
+      tests$global_qVal <- 1
+      #tests$local_vs_global_pBHadj <- 1
+      #tests$local_vs_global_qVal <- 1
+    }
+    return(tests)
+  } else if (level == "proteoform") {
+    message("Aggregating to proteoform-level...")
+    proteoformtests <- aggregatePeptideTestsToProteoform(tests)
+    return(proteoformtests)
+  } else if (level == "protein") {
+    message("Aggregating to protein-level...")
+    prottests <- aggregatePeptideTests(tests)
+    return(prottests)
+  } else if (level == "complex") {
+    message("Aggregating to complex-level...")
+    prottests <- aggregatePeptideTests(tests)
+    complextests <- aggregateProteinTests(prottests)
+    return(complextests)
+  } else {
+    stop("Specified level is not valid. Please chose between peptide, protein and complex.")
+  }
+}
+
