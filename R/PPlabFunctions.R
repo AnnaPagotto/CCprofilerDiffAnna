@@ -474,41 +474,6 @@ testDifferentialExpression_beniFix <- function (featureVals, compare_between = "
 }
 
 
-filterValsByOverlap <- function(featureVals, compare_between){
-  # Select peptides present in both conditions
-  # conditions <- unique(featureVals[,get(compare_between)])
-  if ("complex_id" %in% names(featureVals)) {
-    if("Replicate" %in% names(featureVals)){
-      fv <- unique(featureVals[,.(id, feature_id, complex_id, apex, Replicate, get(compare_between))])
-      fv$dup <- duplicated(fv[, .(id, feature_id, complex_id, apex, Replicate)])
-      fv <- unique(fv[dup == TRUE, .(id, feature_id, complex_id, apex, Replicate)])
-      featureValsBoth <- merge(featureVals, fv, by = c("id", "feature_id", "complex_id", "apex", "Replicate"))
-    }else{
-      fv <- unique(featureVals[,.(id, feature_id, complex_id, apex, get(compare_between))])
-      fv$dup <- duplicated(fv[, .(id, feature_id, complex_id, apex)])
-      fv <- unique(fv[dup == TRUE, .(id, feature_id, complex_id, apex)])
-      featureValsBoth <- merge(featureVals, fv, by = c("id", "feature_id", "complex_id", "apex"))
-    }
-  } else {
-    if("Replicate" %in% names(featureVals)){
-      fv <- unique(featureVals[,.(id, feature_id, apex, Replicate, get(compare_between))])
-      fv$dup <- duplicated(fv[, .(id, feature_id, apex, Replicate)])
-      fv <- unique(fv[dup == TRUE, .(id, feature_id, apex, Replicate)])
-      featureValsBoth <- merge(featureVals, fv, by = c("id", "feature_id", "apex", "Replicate"))
-    }else{
-      fv <- unique(featureVals[,.(id, feature_id, apex, get(compare_between))])
-      fv$dup <- duplicated(fv[, .(id, feature_id, apex)])
-      fv <- unique(fv[dup == TRUE, .(id, feature_id, apex)])
-      featureValsBoth <- merge(featureVals, fv, by = c("id", "feature_id", "apex"))
-    }
-  }
-  # split <- lapply(conditions, function(cond) featureVals[get(compare_between) == cond, .(feature_id, id,apex)])
-  # featureValsBoth <- featureVals[, .SD[all(sapply(conditions ,"%in%", get(compare_between)))], by = .(id, feature_id, get(compare_between))]
-  
-  return(featureValsBoth)
-}
-
-
 getQuantTraces <- function(featureVals, compare_between){
   if ("complex_id" %in% names(featureVals)) {
     if("Replicate" %in% names(featureVals)){
