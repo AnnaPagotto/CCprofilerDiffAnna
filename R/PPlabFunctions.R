@@ -1042,8 +1042,3 @@ proteinQuantification_sibPepCorrFix.tracesList <- function(traces,
   .tracesListTest(res)
   return(res)
 }
-.narank <- function(x,ties.method,na.last){
-  r<-rank(x,ties.method = ties.method,na.last=na.last)
-  r[is.na(x)]<-length(x)
-  r
-}
