@@ -90,30 +90,3 @@ extractvaluesForNorm <- function(traces){
   return(intensities_long)
 }
 
-normalize_sn <- function(X, window, step) {
-  mx<-dcast(X, id~filename, value.var='intensity', sum)
-  mx[mx<0.00001]=NA
-
-  mxs<-as.matrix(mx[,-1])
-  rownames(mxs)<-mx$id
-
-  id_mapping<-unique(X[,c("filename","fraction_number")])
-
-  max_sec <- max(X$fraction_number)
-  windows_sets<-SlidingWindow("data.frame",c(0:max_sec+1), window, step)
-
-  #lmxn<-lapply(windows_sets,function(X){normalizeMedianValues(mxs[,subset(id_mapping, fraction_number %in% X)$filename])})
-  lmxn<-lapply(windows_sets,function(X){normalizeCyclicLoess(mxs[,subset(id_mapping, fraction_number %in% X)$filename])})
-
-  lln<-do.call("rbind",lapply(lmxn, melt, na.rm=TRUE))
-  names(lln)<-c("id", "filename", "intensity")
-
-  lln_dt <- as.data.table(lln)
-  lln_dt[,mean_intensity := mean(intensity, na.rm=T), by=c("id","filename")]
-  lln_dt_sub <- unique(subset(lln_dt, select = c("id","filename","mean_intensity")))
-  names(lln_dt_sub)<-c("id", "filename", "intensity")
-  #lxn<-ddply(lln, .(id,filename),function(X){mean(X$intensity)})
-  #names(lxn)<-c("id", "filename", "intensity")
-  #return(lxn)
-  return(lln_dt_sub)
-}
