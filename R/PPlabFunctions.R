@@ -653,28 +653,6 @@ testDifferentialExpression_beniFix <- function (featureVals, compare_between = "
   return(traces_list_norm)
 }
 
-	dcast_backToTraces <- function(normData){
-  normData_sub <- unique(subset(normData, select = c("id","fraction_number","intensity")))
-  normData_wide <- data.table::dcast(normData_sub, id ~ fraction_number, value.var = "intensity", drop = TRUE)
-  if (ncol(normData_wide) < (max(unique(normData_sub$fraction_number)))+1) {
-    missing <- seq(1,max(unique(normData_sub$fraction_number)),1)[which(! seq(1,max(unique(normData_sub$fraction_number)),1) %in% names(normData_wide))]
-    for (m in missing){
-      normData_wide[, as.character(eval(m)) := NA]
-    }
-  }
-  for (j in seq_len(ncol(normData_wide))){
-    set(normData_wide,which(is.na(normData_wide[[j]])),j,0)
-  }
-  setcolorder(normData_wide, c(seq(1,(ncol(normData_wide)-1),1),"id"))
-  setkey(normData_wide, "id")
-  normData_wide$id <- as.character(normData_wide$id)
-  return(normData_wide)
-}
-
-extractvaluesForNorm <- function(traces){
-  intensities_long <- data.table::melt(traces$traces, id.vars = "id", variable.name = "fraction_number", value.name = "intensity")
-  return(intensities_long)
-}
 
 ############# from Benni
 
