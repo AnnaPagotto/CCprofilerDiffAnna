@@ -175,7 +175,7 @@ fit_gaussians_mod <- function (chromatogram, n_gaussians, min_iterations = 5, ma
   return(results)
 }
 
-#choose_gaussians_corr_mod
+
 choose_gaussians_corr_mod <- function (chromatogram, points = NULL, max_gaussians = 5, criterion = c("AICc", 
   "AIC", "BIC"), min_iterations=5, max_iterations = 10, min_R_squared = 0.5, 
   method = c("guess", "random"), filter_gaussians_center = TRUE, 
@@ -478,7 +478,7 @@ testDifferentialExpression_beniFix <- function (featureVals, compare_between = "
 ###################### getMassAssemblyChange_aljazfix
 ############################################################################
 	
-	getMassAssemblyChange_aljazfix <- function(tracesList, design_matrix,
+getMassAssemblyChange_aljazfix <- function(tracesList, design_matrix,
                                   compare_between = "Condition",
                                   quantLevel = "protein_id",
                                   plot = FALSE,
@@ -600,7 +600,7 @@ testDifferentialExpression_beniFix <- function (featureVals, compare_between = "
 ############################# normalizeByCyclicLoess
 ############################################################################
 
-	normalizeByCyclicLoess <- function(traces_list, window = 3, step = 1, plot = TRUE, PDF = TRUE, name = "normalizeByCyclicLoess") {
+normalizeByCyclicLoess <- function(traces_list, window = 3, step = 1, plot = TRUE, PDF = TRUE, name = "normalizeByCyclicLoess") {
   .tracesListTest(traces_list, type = "peptide")
   trace_intensities_long <- lapply(traces_list, extractvaluesForNorm)
   combi_table <- rbindlist(trace_intensities_long, use.names=TRUE, fill=FALSE, idcol="sample")
@@ -705,7 +705,7 @@ SlidingWindow <- function (FUN, data, window, step)
 #################### testDifferentialExpression_1repfix_chatgpt
 ############################################################################
 	
-	testDifferentialExpression_1repfix_chatgpt <- function(featureVals,
+testDifferentialExpression_1repfix_chatgpt <- function(featureVals,
                                              compare_between = "Condition",
                                              level = c("protein", "proteoform", "peptide", "complex"),
                                              measuredOnly = TRUE) {
