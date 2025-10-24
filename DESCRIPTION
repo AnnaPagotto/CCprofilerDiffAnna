@@ -1,10 +1,10 @@
-Package: CCprofiler
+Package: CCprofilerDiffAnna
 Type: Package
 Title: Complex feature detection using SEC protein chromatograms.
 Version: 0.99.1
 Author: Robin Hafen <robin.hafen@gmail.com> Isabell Bludau <bludau@imsb.biol.ethz.ch>
 Maintainer: Isabell Bludau <bludau@imsb.biol.ethz.ch>
-Description: Complex feature detection using SEC protein chromatograms
+Description: Complex feature detection using SEC protein chromatograms - bugs fixed, functions added from the PP LAb SECy members
 biocViews: MassSpectrometry,Proteomics
 License: GPL-3
 URL: https://github.com/CCprofiler/CCprofiler
