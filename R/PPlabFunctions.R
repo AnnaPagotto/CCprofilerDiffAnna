@@ -84,7 +84,7 @@ logVAR<-log(mdata$sigma^2)
 }
 
 ############################################################################
-################################ pick picking
+################################ pick picking GAUSSIANS
 ############################################################################
 
 fit_gaussians_mod <- function (chromatogram, n_gaussians, min_iterations = 5, max_iterations = 10, min_R_squared = 0.5, 
@@ -176,7 +176,6 @@ fit_gaussians_mod <- function (chromatogram, n_gaussians, min_iterations = 5, ma
 }
 
 #choose_gaussians_corr_mod
-
 choose_gaussians_corr_mod <- function (chromatogram, points = NULL, max_gaussians = 5, criterion = c("AICc", 
   "AIC", "BIC"), min_iterations=5, max_iterations = 10, min_R_squared = 0.5, 
   method = c("guess", "random"), filter_gaussians_center = TRUE, 
@@ -764,6 +763,22 @@ extractvaluesForNorm <- function(traces){
 }
 
 
+############################################################################
+#################### SlidingWindow
+############################################################################
+	
+SlidingWindow <- function (FUN, data, window, step)
+   {
+     total <- length(data)
+     spots <- seq(from = 1, to = (total - window), by = step)
+     result <- vector(length = length(spots))
+     for (i in 1:length(spots)) {
+       result[i] <- match.fun(FUN)(data[spots[i]:(spots[i] +
+                                                    window - 1)])
+     }
+     return(result)
+ }
+	
 ############################################################################
 #################### testDifferentialExpression_1repfix_chatgpt
 ############################################################################
